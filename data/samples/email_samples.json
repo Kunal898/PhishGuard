@@ -1,0 +1,49 @@
+[
+    {
+        "category": "Urgency / Threat",
+        "subject": "ACTION REQUIRED: Your account will be suspended in 24 hours",
+        "content": "Dear Customer,\n\nWe have detected unusual activity on your account. To ensure your security, we have temporarily restricted access. To restore full functionality, you must verify your identity immediately.\n\nFailure to complete this action within 24 hours will result in permanent account suspension and loss of all associated data.\n\nClick here to verify now: http://bit.ly/secure-login-portal-v9\n\nThank you,\nAccount Security Team",
+        "phishing": true,
+        "indicators": [
+            "Urgency (24 hours)",
+            "Generic Greeting",
+            "Shortened URL"
+        ]
+    },
+    {
+        "category": "Financial / Billing",
+        "subject": "Invoice #49281 - Payment Overdue",
+        "content": "Hello,\n\nThis is a final notice regarding your outstanding balance for Invoice #49281. Our records show that payment has not been received. Please login to our billing portal at www.mybank-secure-info.xyz to settle the balance and avoid legal action.\n\nIf you have already paid, please ignore this message.\n\nFinance Department",
+        "phishing": true,
+        "indicators": [
+            "Financial pressure",
+            "Suspicious TLD (.xyz)",
+            "Threat of legal action"
+        ]
+    },
+    {
+        "category": "Brand Impersonation (Amazon)",
+        "subject": "Your Amazon.com order #102-39218-3829 has been cancelled",
+        "content": "Dear User,\n\nYour recent order for 'Apple iPhone 15 Pro Max' has been cancelled due to a payment verification error. To re-authorize your purchase and update your shipping details, please visit the Amazon Resolution Center:\n\nhttps://amazon-order-support-v1.com/update/billing\n\nWe apologize for any inconvenience caused.\n\nAmazon.com Help Desk",
+        "phishing": true,
+        "indicators": [
+            "Brand Spoofing",
+            "Fake Order Cancellation",
+            "Look-alike Domain"
+        ]
+    },
+    {
+        "category": "Safe / Corporate",
+        "subject": "Weekly Team Sync Meeting Notes",
+        "content": "Hi Team,\n\nAttached are the notes from our weekly sync. We discussed the upcoming project deadlines and the new feature rollout schedule. If anyone has questions, please reach out to the project lead.\n\nThe next meeting is scheduled for Monday at 10 AM in the main conference room.\n\nBest regards,\nKunal",
+        "phishing": false,
+        "indicators": []
+    },
+    {
+        "category": "Safe / Subscription",
+        "subject": "Your Monthly Newsletter: Tech Trends March 2025",
+        "content": "Hello Kunal,\n\nIn this month's issue, we explore the rise of Agentic AI and its impact on cybersecurity. Check out our latest blog posts for deep dives into phishing prevention and secure coding practices.\n\nRead more on our official blog: https://www.phishguard-project.io/blog\n\nYou are receiving this email because you subscribed to TechTrends.\n\nUnsubscribe",
+        "phishing": false,
+        "indicators": []
+    }
+]

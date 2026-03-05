@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="PhishGuard Admin Panel — View reports, scan statistics, and manage phishing data.">
+    <title>PhishGuard Admin — Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Small overrides for admin specifically if needed */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow--1"></div>
+    <div class="bg-glow bg-glow--2"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🛡️</div>
+                <span class="logo-text">PhishGuard</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Scanner</a>
+                <a href="admin.html" class="nav-link active nav-admin">Admin Dashboard</a>
+            </nav>
+            <div class="header-status">
+                <span class="status-dot"></span>
+                Admin Mode
+            </div>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <div class="admin-header">
+            <div>
+                <h1 class="admin-title">Admin Dashboard</h1>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 6px;">
+                    Monitor real-time scans and manage security reports
+                </p>
+            </div>
+            <div class="admin-actions">
+                <button class="btn btn-ghost" onclick="loadAdminData()">
+                    🔄 Refresh Data
+                </button>
+                <button class="btn btn-primary" onclick="exportCSV()">
+                    📥 Export Scans (CSV)
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" style="margin-bottom: 3rem;">
+            <div class="stat-card total">
+                <div class="stat-icon">🔍</div>
+                <div class="stat-value" id="adminTotal">0</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+            <div class="stat-card safe">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="adminSafe">0</div>
+                <div class="stat-label">Safe Verified</div>
+            </div>
+            <div class="stat-card suspicious">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-value" id="adminSuspicious">0</div>
+                <div class="stat-label">Suspicious Found</div>
+            </div>
+            <div class="stat-card phishing">
+                <div class="stat-icon">🚫</div>
+                <div class="stat-value" id="adminPhishing">0</div>
+                <div class="stat-label">Phishing Blocked</div>
+            </div>
+        </div>
+
+        <!-- Scan History Section -->
+        <div class="admin-section">
+            <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Real-Time Scan Activity
+            </h2>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:35%">URL / Context</th>
+                            <th style="width:15%">Result</th>
+                            <th style="width:12%">Risk</th>
+                            <th style="width:18%">Source</th>
+                            <th style="width:20%">Time (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr>
+                            <td colspan="5" class="admin-no-data">Fetching activity log...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- User Reports Section -->
+        <div class="admin-section">
+            <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+                Manual Phishing Reports
+            </h2>
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40%">Reported URL</th>
+                            <th style="width:35%">Analysis / Reason</th>
+                            <th style="width:25%">Reported At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsBody">
+                        <tr>
+                            <td colspan="3" class="admin-no-data">No manual reports filed.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <p>🛡️ PhishGuard | &copy; 2025 Kunal Navdhinge</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+
+        document.addEventListener('DOMContentLoaded', loadAdminData);
+
+        async function loadAdminData() {
+            await Promise.all([loadAdminStats(), loadReports(), loadHistory()]);
+        }
+
+        async function loadAdminStats() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/stats`);
+                const data = await res.json();
+                document.getElementById('adminTotal').textContent = data.total_scans || 0;
+                document.getElementById('adminSafe').textContent = data.safe_detected || 0;
+                document.getElementById('adminSuspicious').textContent = data.suspicious_detected || 0;
+                document.getElementById('adminPhishing').textContent = data.phishing_detected || 0;
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadReports() {
+            const tbody = document.getElementById('reportsBody');
+            try {
+                const res = await fetch(`${API_BASE}/admin/reports`);
+                const data = await res.json();
+                if (!data.reports || data.reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="admin-no-data">No manual reports filed.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.reports.map(r => `
+                    <tr>
+                        <td class="admin-url-cell" title="${esc(r.url)}">${esc(r.url)}</td>
+                        <td class="admin-reason-cell">${esc(r.reason)}</td>
+                        <td class="admin-time-cell">${new Date(r.reported_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="3" class="admin-no-data">Error loading reports.</td></tr>'; }
+        }
+
+        async function loadHistory() {
+            const tbody = document.getElementById('historyBody');
+            try {
+                const res = await fetch(`${API_BASE}/admin/history`);
+                const data = await res.json();
+                if (!data.scans || data.scans.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="admin-no-data">No history available.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.scans.map(s => {
+                    const pred = s.prediction?.toLowerCase();
+                    const riskClass = pred === 'safe' ? 'risk-low' : (pred === 'suspicious' ? 'risk-med' : 'risk-high');
+                    return `
+                    <tr>
+                        <td class="admin-url-cell" title="${esc(s.url)}">${esc(s.url)}</td>
+                        <td><span class="badge ${pred}">${esc(s.prediction)}</span></td>
+                        <td><span class="risk-score ${riskClass}">${Math.round(s.risk_score)}%</span></td>
+                        <td style="color:var(--text-secondary)">${esc(s.scan_source || 'Unknown')}</td>
+                        <td class="admin-time-cell">${new Date(s.timestamp).toLocaleString()}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="admin-no-data">Error loading history.</td></tr>'; }
+        }
+
+        function exportCSV() { window.open(`${API_BASE}/admin/export`, '_blank'); }
+        function esc(t) { return (t || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+    </script>
+</body>
+
+</html>

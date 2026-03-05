@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="AI-powered phishing website detection system. Scan URLs and QR codes instantly to detect phishing, suspicious, and safe websites using machine learning.">
+    <meta name="keywords"
+        content="phishing detection, URL scanner, QR code scanner, cybersecurity, machine learning, website safety">
+    <title>PhishGuard – Phishing URL & QR Code Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <!-- html5-qrcode library for QR code scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+
+<body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="particles" id="particles"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="scanner-animation">
+            <div class="scanner-ring"></div>
+            <div class="scanner-ring"></div>
+            <div class="scanner-ring"></div>
+            <div class="scanner-center">🔍</div>
+        </div>
+        <p class="loading-text" id="loadingText">Analyzing URL...</p>
+        <div class="loading-progress">
+            <div class="loading-progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Report Modal (with Cybercrime Reporting) -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🚩 Report & Cybercrime</h2>
+                <button class="modal-close" onclick="closeReportModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="reportUrl">Suspicious URL</label>
+                    <input type="text" id="reportUrl" class="form-input mono" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="reportReason">Describe why this URL is suspicious</label>
+                    <textarea id="reportReason" class="form-input"
+                        placeholder="e.g., Fake login page mimicking a bank website, asked for credit card details..."></textarea>
+                </div>
+
+                <!-- Cybercrime Reporting Links -->
+                <div class="cybercrime-links">
+                    <h4>🚔 Report to Cybercrime Authorities</h4>
+                    <div class="cybercrime-link-item">
+                        <span class="link-icon">🇮🇳</span>
+                        <div>
+                            <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer">National
+                                Cybercrime Portal (India)</a><br>
+                            <span class="link-desc">Helpline: 1930</span>
+                        </div>
+                    </div>
+                    <div class="cybercrime-link-item">
+                        <span class="link-icon">🌐</span>
+                        <div>
+                            <a href="https://safebrowsing.google.com/safebrowsing/report_phish/" target="_blank"
+                                rel="noopener noreferrer">Google Safe Browsing Report</a><br>
+                            <span class="link-desc">Report phishing to Google</span>
+                        </div>
+                    </div>
+                    <div class="cybercrime-link-item">
+                        <span class="link-icon">🐟</span>
+                        <div>
+                            <a href="https://www.phishtank.com/" target="_blank"
+                                rel="noopener noreferrer">PhishTank</a><br>
+                            <span class="link-desc">Community phishing database</span>
+                        </div>
+                    </div>
+                    <div class="cybercrime-link-item">
+                        <span class="link-icon">📧</span>
+                        <div>
+                            <a href="mailto:reportphishing@apwg.org">reportphishing@apwg.org</a><br>
+                            <span class="link-desc">Anti-Phishing Working Group</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeReportModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="submitReport()">🚩 Submit Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🛡️</div>
+                <span class="logo-text">PhishGuard</span>
+            </a>
+
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">Scanner</a>
+            </nav>
+
+            <div class="header-status">
+                <span class="status-dot"></span>
+                System Active
+            </div>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <!-- Hero Section -->
+        <section class="hero">
+
+            <h1>
+                Detect <span class="gradient-text">Phishing URLs</span><br>
+                Before They Strike
+            </h1>
+
+        </section>
+
+        <!-- Scan Mode Tabs -->
+        <div class="scan-tabs">
+            <button class="scan-tab active" id="tabUrl" onclick="switchScanMode('url')">
+                🔗 URL Scan
+            </button>
+            <button class="scan-tab" id="tabQr" onclick="switchScanMode('qr')">
+                📱 QR Scan
+            </button>
+            <button class="scan-tab" id="tabEmail" onclick="switchScanMode('email')">
+                📧 Email Scan
+            </button>
+        </div>
+
+        <!-- Scan Section -->
+        <section class="scan-section">
+            <!-- URL Input Panel -->
+            <div class="scan-panel active" id="urlPanel">
+                <div class="scan-input-group">
+                    <div class="scan-input-icon">🔗</div>
+                    <input type="text" id="urlInput" class="scan-input"
+                        placeholder="Enter URL to scan (e.g., https://example.com)" autocomplete="off"
+                        spellcheck="false" aria-label="URL to scan">
+                    <button class="scan-btn" id="scanBtn" onclick="scanURL()">
+                        <span>⚡</span>
+                        <span>Scan URL</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- QR Code Scan Panel -->
+            <div class="scan-panel" id="qrPanel">
+                <div class="qr-scan-panel">
+                    <!-- QR Options -->
+                    <div class="qr-options" id="qrOptions">
+                        <div class="qr-option-card" onclick="startQrCamera()">
+                            <div class="option-icon">📷</div>
+                            <h3>Camera Scan</h3>
+                            <p>Use your device camera to scan a QR code in real-time</p>
+                        </div>
+                        <div class="qr-option-card" onclick="openQrFileUpload()">
+                            <div class="option-icon">🖼️</div>
+                            <h3>Upload Image</h3>
+                            <p>Upload an image containing a QR code to extract the URL</p>
+                        </div>
+                    </div>
+
+                    <!-- Camera Scanner -->
+                    <div class="qr-camera-container" id="qrCameraContainer">
+                        <button class="qr-camera-close" onclick="stopQrCamera()" title="Close Camera">✕</button>
+                        <div id="qr-reader"></div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="qr-file-upload" id="qrFileUpload">
+                        <div class="file-drop-zone" id="fileDropZone"
+                            onclick="document.getElementById('qrFileInput').click()">
+                            <div class="drop-icon">📤</div>
+                            <h3>Drop QR code image here</h3>
+                            <p>or click to browse (PNG, JPG, WEBP)</p>
+                        </div>
+                        <input type="file" id="qrFileInput" accept="image/*" onchange="handleQrFile(event)">
+                    </div>
+
+                    <!-- Decoded URL Display -->
+                    <div class="qr-decoded-url" id="qrDecodedUrl">
+                        <p class="decoded-label">📍 URL Found in QR Code</p>
+                        <p class="decoded-value" id="decodedUrlValue"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Scan Panel -->
+            <div class="scan-panel" id="emailPanel">
+                <div class="email-scan-container">
+                    <label for="emailInput" class="form-label">📧 Paste the email body or text below</label>
+                    <textarea id="emailInput" class="email-textarea"
+                        placeholder="Paste the email content here. PhishGuard will analyze the text for urgency, threats, and suspicious links..."></textarea>
+                    <div class="input-actions" style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+                        <button id="emailScanBtn" class="btn btn-primary" onclick="scanEmail()">
+                            🚀 Analyze Email Content
+                        </button>
+                        <div class="dropdown" style="position:relative;">
+                            <button class="btn btn-ghost" onclick="toggleSampleDropdown()">
+                                🧪 Load Test Sample ▾
+                            </button>
+                            <div id="emailSamplesDropdown" class="dropdown-content">
+                                <a href="javascript:void(0)" onclick="loadEmailSample(0)">⚠️ Urgency Alert</a>
+                                <a href="javascript:void(0)" onclick="loadEmailSample(1)">💰 Billing Fraud</a>
+                                <a href="javascript:void(0)" onclick="loadEmailSample(2)">📦 Amazon Spoof</a>
+                                <a href="javascript:void(0)" onclick="loadEmailSample(3)">✅ Safe Meeting</a>
+                                <a href="javascript:void(0)" onclick="loadEmailSample(4)">✅ Safe News</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section class="result-section" id="resultSection">
+            <div class="result-card">
+                <!-- Result Header -->
+                <div class="result-header">
+                    <div class="result-status">
+                        <div class="result-icon" id="resultIcon">🛡️</div>
+                        <div>
+                            <p class="result-label">Detection Result</p>
+                            <p class="result-prediction" id="resultPrediction">Safe</p>
+                            <p class="result-source" id="resultSource"></p>
+                        </div>
+                    </div>
+                    <div class="result-confidence">
+                        <p class="confidence-value" id="confidenceValue">0%</p>
+                        <p class="confidence-label">Confidence</p>
+                    </div>
+                </div>
+
+                <!-- Risk Meter -->
+                <div class="risk-meter">
+                    <div class="risk-meter-header">
+                        <span class="risk-meter-label">Risk Score</span>
+                        <span class="risk-meter-value" id="riskValue">0/100</span>
+                    </div>
+                    <!-- Security Insight (Contextual) -->
+                    <div id="securityInsight" class="security-insight" style="display:none;">
+                        <!-- Dynamically filled by JS -->
+                    </div>
+
+                    <div class="result-timestamp">
+                        <span>Scan ID: <span id="scanId">#---</span></span>
+                        <span>•</span>
+                        <span id="scanTimestamp">---</span>
+                    </div>
+                    <div class="risk-bar-track">
+                        <div class="risk-bar-fill" id="riskBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Probability Breakdown -->
+                <div class="probability-section" id="probabilitySection">
+                    <h3>Probability Breakdown</h3>
+                    <div class="prob-item">
+                        <span class="prob-label">Safe</span>
+                        <div class="prob-bar-track">
+                            <div class="prob-bar-fill safe" id="probSafe" style="width: 0%"></div>
+                        </div>
+                        <span class="prob-value" id="probSafeVal">0%</span>
+                    </div>
+                    <div class="prob-item">
+                        <span class="prob-label">Suspicious</span>
+                        <div class="prob-bar-track">
+                            <div class="prob-bar-fill suspicious" id="probSuspicious" style="width: 0%"></div>
+                        </div>
+                        <span class="prob-value" id="probSuspiciousVal">0%</span>
+                    </div>
+                    <div class="prob-item">
+                        <span class="prob-label">Phishing</span>
+                        <div class="prob-bar-track">
+                            <div class="prob-bar-fill phishing" id="probPhishing" style="width: 0%"></div>
+                        </div>
+                        <span class="prob-value" id="probPhishingVal">0%</span>
+                    </div>
+                </div>
+
+                <!-- Email Flags Section -->
+                <div class="email-flags-section" id="emailFlagsSection" style="display: none;">
+                    <h3>🚩 Red Flags Detected</h3>
+                    <div id="emailFlagsList" class="email-flags-list"></div>
+                    <div id="emailLinksFound" class="email-links-found"></div>
+                </div>
+
+                <!-- Extracted Features -->
+                <div class="features-section">
+                    <div class="features-toggle" onclick="toggleFeatures()">
+                        <h3>Extracted Features (32)</h3>
+                        <span class="toggle-icon" id="toggleIcon">▼</span>
+                    </div>
+                    <div class="features-grid" id="featuresGrid"></div>
+                </div>
+
+                <!-- Actions: PDF, Report, Cybercrime -->
+                <div class="result-actions">
+                    <button class="action-btn pdf" onclick="downloadDocxReport()">
+                        📄 Download DOCX Report
+                    </button>
+                    <button class="action-btn report" onclick="openReportModal()">
+                        🚩 Report URL
+                    </button>
+                    <button class="action-btn cybercrime" onclick="openCybercrimePortal()">
+                        🚔 Report to Cybercrime
+                    </button>
+                    <button class="action-btn secondary" onclick="copyResult()">
+                        📋 Copy
+                    </button>
+                    <span class="scan-timestamp" id="scanTimestamp"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics -->
+        <section class="stats-section">
+            <h2>📊 Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Scans</div>
+                </div>
+                <div class="stat-card safe">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="statSafe">0</div>
+                    <div class="stat-label">Safe URLs</div>
+                </div>
+                <div class="stat-card suspicious">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value" id="statSuspicious">0</div>
+                    <div class="stat-label">Suspicious</div>
+                </div>
+                <div class="stat-card phishing">
+                    <div class="stat-icon">🚫</div>
+                    <div class="stat-value" id="statPhishing">0</div>
+                    <div class="stat-label">Phishing Detected</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Scans -->
+        <section class="recent-section">
+            <h2>🕐 Recent Scans</h2>
+            <div class="recent-table-wrapper">
+                <table class="recent-table" id="recentTable">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Result</th>
+                            <th>Confidence</th>
+                            <th>Source</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTableBody">
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-icon">🔍</div>
+                                    <p>No scans yet. Enter a URL or scan a QR code to get started.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🛡️ PhishGuard | &copy; 2025 Kunal Navdhinge</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
